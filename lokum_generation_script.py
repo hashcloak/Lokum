@@ -1,4 +1,5 @@
 import cocks_pinch as cp
+import complex_multiplication as cm
 from utils import print_curve
 from sage.all import divisors, Integer, log, e, exp
 
@@ -15,3 +16,6 @@ for potential_k in potential_ks[:-1]:
         bits_of_sec = log((2**(kappa) * exp(pow(c / k, 1/3) * pow(l, 1/3) * pow(log(l), 2 / 3))).n())/log(2).n()
         print("Estimated bits of security: ", bits_of_sec)
         print_curve(q,t, r, k, D)
+        print(cm.make_curve(q,t,r,k,D))
+        print("-------------------------------------------------------------------------------------------------")
+
