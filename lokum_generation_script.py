@@ -3,24 +3,6 @@ import complex_multiplication as cm
 from utils import print_curve
 from sage.all import divisors, Integer, log, e, exp, euler_phi
 
-def valid_candidate_curve():
-    pass
-
-def check_small_subgroup():
-    pass
-
-def check_twist_small_subgroup():
-    pass
-
-def check_g2_small_subgroup():
-    pass
-
-def check_twist_g2_small_subgroup():
-    pass
-
-def check_curve():
-    pass
-
 def test_finite_field_nfs(q, r, k, cost, sieving_dim=2, samples=100000, special=False, conj=False, sarkarsingh=False, jouxlercier=False, qx=None, u=None, max_coeff=2, deg_f=None, deg_phi_base=None, B0_alpha=800, B1_alpha=2000, compute_alpha=True):
     """
     run NFS for the field GF(q^k) with r a prime divisor of the cyclotomic subgroup
