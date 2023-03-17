@@ -3,6 +3,39 @@ import complex_multiplication as cm
 from utils import print_curve
 from sage.all import divisors, Integer, log, e, exp, euler_phi
 
+from sage.all_cmdline import *   # import sage library
+
+from sage.rings.integer_ring import ZZ
+from sage.rings.rational_field import QQ
+from sage.schemes.elliptic_curves.cm import hilbert_class_polynomial
+from sage.rings.finite_rings.finite_field_constructor import FiniteField, GF
+from sage.rings.number_field.number_field import NumberField
+from sage.schemes.elliptic_curves.constructor import EllipticCurve
+from sage.structure.proof.all import arithmetic
+from sage.arith.misc import GCD, gcd
+from sage.arith.functions import lcm
+from sage.functions.log import log
+
+# imports from TNFS package
+import sys 
+sys.path.append("./alpha/sage")
+import tnfs
+from tnfs.alpha.alpha_tnfs_2d import alpha_TNFS_2d
+from tnfs.alpha.alpha2d import alpha2d
+from  tnfs.alpha.alpha3d import alpha3d
+
+from tnfs.simul.polyselect import Polyselect
+from tnfs.simul.simulation_tnfs import Simulation_TNFS
+from tnfs.simul.simulation_nfs import Simulation_NFS
+
+from tnfs.simul.polyselect_utils import automorphism_factor
+from tnfs.simul.polyselect_utils import pretty_print_coeffs_from_coeffs, pretty_print_poly_from_coeffs
+from tnfs.gen.generate_curve_utils import str_binary_form, str_py_binary_form
+
+Rx = ZZ['x']; (x,) = Rx._first_ngens(1)
+ZZy = ZZ['y']; (y,) = ZZy._first_ngens(1)
+Rxy = PolynomialRing(ZZy, names=('x',)); (x,) = Rxy._first_ngens(1)
+
 def test_finite_field_nfs(q, r, k, cost, sieving_dim=2, samples=100000, special=False, conj=False, sarkarsingh=False, jouxlercier=False, qx=None, u=None, max_coeff=2, deg_f=None, deg_phi_base=None, B0_alpha=800, B1_alpha=2000, compute_alpha=True):
     """
     run NFS for the field GF(q^k) with r a prime divisor of the cyclotomic subgroup
@@ -87,6 +120,7 @@ def test_finite_field_nfs(q, r, k, cost, sieving_dim=2, samples=100000, special=
     # if there is not enough relations of there are too many relations, re-run with the same polynomials but with a higher/smaller cost
     simul.adjust_cost(samples=samples)
     print("############")
+    return simul.log2_total_time_BD
 
 def test_finite_field_tnfs(q, r, k, cost, samples=100000, special=False, conj=False, sarkarsingh=False, jouxlercier=False, all_deg_h=None, qx=None, u=None, max_coeff=2, deg_f=None, B0_alpha=800, B1_alpha=1200, compute_alpha=True, alpha_test_principal=False):
     """
@@ -189,22 +223,32 @@ def test_finite_field_tnfs(q, r, k, cost, samples=100000, special=False, conj=Fa
             # if there is not enough relations of there are too many relations, re-run with the same polynomials but with a higher/smaller cost
             simul.adjust_cost(samples=samples)
             print("############")
+            return simul.log2_total_time_sieving_cost
 
 if __name__ == '__main__':
     r = 3618502788666131213697322783095070105623107215331596699973092056135872020481
     potential_ks = divisors(r-1)
+    potential_curves = []
     for potential_k in potential_ks[:-1]:
-        if r % potential_k == 1:
+        if r % potential_k == 1 and potential_k <= 10:
             r, potential_k, D = cp.gen_params_from_r(r, potential_k)
-            q,t,r,k,D = cp.run(r, potential_k, D)
-            q, r = Integer(q), Integer(r)
-            print("q: {}, size of q: {}, r: {}, size of r: {}, k: {}".format(q, q.nbits(), r, r.nbits(), k))
-            c, kappa = Integer(32), Integer(-8)
-            l = q.nbits() * k * log(2)/log(e)
-            bits_of_sec = log((2**(kappa) * exp(pow(c / k, 1/3) * pow(l, 1/3) * pow(log(l), 2 / 3))).n())/log(2).n()
-            print("Estimated bits of security (conservative): ", bits_of_sec)
-            print("Ideal trace size vs actual trace", (log(r, 2)/euler_phi(k)).n(), t)
-            print_curve(q,t, r, k, D)
-            #print(cm.make_curve(q,t,r,k,D))
-            print("-------------------------------------------------------------------------------------------------")
+            n_iterations = Integer((ln(r) * ln(2)).round())
+            for i in range(n_iterations):
+                q ,t,r,k,D = cp.run(r, potential_k, D)
+                if q.nbits() <= 512:
+                    print_curve(q, t, r, k, D)
+                    c, kappa = Integer(32), Integer(-8)
+                    l = q.nbits() * k * log(2)/log(e)
+                    # We will use this as a conservative estimate for the number of bits of security for a candidate and use it as a starting for the (T)NFS
+                    bits_of_sec_conservative = log((2**(kappa) * exp(pow(c / k, 1/3) * pow(l, 1/3) * pow(log(l), 2 / 3))).n())/log(2).n()
+                    if bits_of_sec_conservative >= 100:
+                        bits_of_sec_nfs = test_finite_field_nfs(q, r, potential_k, bits_of_sec_conservative, samples=100000, conj=True, max_coeff=3, B0_alpha=800, B1_alpha=2000, compute_alpha=True)
+                        bits_of_sec_tnfs = test_finite_field_tnfs(q, r, potential_k, bits_of_sec_conservative,  conj=True, max_coeff=2, B0_alpha=800, B1_alpha=1200, compute_alpha=True, alpha_test_principal=False)
+                        potential_curves.append((q, t, r, k, D, bits_of_sec_conservative, bits_of_sec_nfs, bits_of_sec_tnfs))
 
+    for potential_curve in potential_curves:
+        q, t, r, k, D, bits_of_sec_conservative, bits_of_sec_nfs, bits_of_sec_tnfs = potential_curve
+        print_curve(q, t, r, k, D)
+        print("Conservative estimate for bits of security:", bits_of_sec_conservative)
+        print("Bits of security (NFS): ", bits_of_sec_nfs)
+        print("Bits of security (TNFS): ", bits_of_sec_tnfs)
