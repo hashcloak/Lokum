@@ -1,3 +1,6 @@
 [submodule "alpha"]
 	path = alpha
 	url = https://gitlab.inria.fr/tnfs-alpha/alpha.git
+[submodule "bw6-761"]
+	path = bw6-761
+	url = https://gitlab.inria.fr/zk-curves/bw6-761.git
