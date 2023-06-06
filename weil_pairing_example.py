@@ -13,6 +13,11 @@ print(m)
 n = 113
 P = int(m/n**2)*E2.random_point()
 Q = int(m/n**2)*E2.random_point()
+
+print(m / n)
+print(m / (n * n))
+print(n * P)
+print(n * Q)
 print(P.order())
 print(Q.order())
 

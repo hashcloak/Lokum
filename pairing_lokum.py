@@ -54,12 +54,20 @@ def test_lokum(a, b, q, r, tr, c, D):
     Fq4Z = Fq4['Z']; (Z,) = Fq4Z._first_ngens(1);
     Fq8 = Fq4.extension(Z**2 - j, names=('s',)); (s,) = Fq8._first_ngens(1)
 
-    # EXAMPLE
-    print("FQ8 is")
-    F8 = GF(q**8, 'b')
-    b = F8.gen()
-    E8 = EllipticCurve(F8, [F8(a), F8(b)])
-    print(E8)
+    # 
+    E_M = EllipticCurve([(Fq4(a))*j**2, (Fq4(b))*j**3])
+    print("M-twist\na=a*w^2={}\nb=b*w^3={}".format(E_M.a4(),E_M.a6()))
+    E_D = EllipticCurve([(Fq4(a))/j**2, (Fq4(b))/j**3])
+    print("D-twist\na=a/w^2={}\nb=b/w^3={}".format(E_D.a4(),E_D.a6()))
+
+    print("FOUND E_M AND E_D")
+
+
+    # HOW TO FIND ORDER_TWIST?
+    
+    print("check_curve_order(E_M, order_twist): {}".format(check_curve_order(E_M, order_twist)))
+    print("check_curve_order(E_D, order_twist): {}".format(check_curve_order(E_D, order_twist)))
+
     # EXAMPLE
     EK = E.base_extend(Fq8_abs)
     print(EK)
