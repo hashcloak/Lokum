@@ -117,4 +117,3 @@ def tate_pairing_cp6_782_2naf(P, Q, a, r):
     m,S1 = miller_function_tate_2naf(P, Q, a, r)
     f = final_exp_cp6_782(m)
     return f
-
